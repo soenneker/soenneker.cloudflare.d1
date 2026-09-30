@@ -19,7 +19,7 @@ public sealed class CloudflareD1UtilTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
-    public async Task Query_preserves_parameters_and_uses_correct_endpoint(bool raw)
+    public async ValueTask Query_preserves_parameters_and_uses_correct_endpoint(bool raw)
     {
         using var fixture = new Fixture();
         var body = new D1BatchQuery { D1SingleQuery = new D1SingleQuery
@@ -40,7 +40,7 @@ public sealed class CloudflareD1UtilTests
     }
 
     [Test]
-    public async Task Batch_serializes_as_batch_object()
+    public async ValueTask Batch_serializes_as_batch_object()
     {
         using var fixture = new Fixture();
         await fixture.Util.Query("account", "token", "database", new D1BatchQuery
@@ -52,7 +52,7 @@ public sealed class CloudflareD1UtilTests
     }
 
     [Test]
-    public async Task List_passes_pagination_and_encodes_name()
+    public async ValueTask List_passes_pagination_and_encodes_name()
     {
         using var fixture = new Fixture();
         await fixture.Util.ListDatabases("account", "token", "test database", 2, 10);
@@ -63,7 +63,7 @@ public sealed class CloudflareD1UtilTests
     }
 
     [Test]
-    public async Task Rejects_ambiguous_query_before_acquiring_client()
+    public async ValueTask Rejects_ambiguous_query_before_acquiring_client()
     {
         using var fixture = new Fixture();
         try
@@ -80,7 +80,7 @@ public sealed class CloudflareD1UtilTests
     }
 
     [Test]
-    public async Task Cancellation_stops_before_acquiring_client()
+    public async ValueTask Cancellation_stops_before_acquiring_client()
     {
         using var fixture = new Fixture();
         using var cancellation = new CancellationTokenSource();
@@ -95,7 +95,7 @@ public sealed class CloudflareD1UtilTests
     }
 
     [Test]
-    public async Task Api_errors_are_propagated()
+    public async ValueTask Api_errors_are_propagated()
     {
         using var fixture = new Fixture();
         fixture.Handler.Status = HttpStatusCode.Forbidden;
