@@ -111,6 +111,50 @@ public sealed class CloudflareD1UtilTests
         }
     }
 
+    [Test]
+    public async ValueTask QueryDocument_preserves_statement_arrays_and_errors()
+    {
+        using var fixture = new Fixture();
+        fixture.Handler.Response = "{\"success\":true,\"result\":[{\"success\":true,\"results\":[{\"value\":\"snapshot\"}]},{\"success\":false,\"error\":\"failed\"}]}";
+        using JsonDocument response = await fixture.Util.QueryDocument("account", "token", "database",
+            new D1BatchQuery { D1SingleQuery = new D1SingleQuery { Sql = "SELECT ?", Params = ["snapshot"] } });
+        JsonElement statements = response.RootElement.GetProperty("result");
+        await Assert.That(statements.GetArrayLength()).IsEqualTo(2);
+        await Assert.That(statements[0].GetProperty("results")[0].GetProperty("value").GetString()).IsEqualTo("snapshot");
+        await Assert.That(statements[1].GetProperty("success").GetBoolean()).IsFalse();
+        await Assert.That(statements[1].GetProperty("error").GetString()).IsEqualTo("failed");
+        using JsonDocument request = JsonDocument.Parse(fixture.Handler.Body!);
+        await Assert.That(request.RootElement.GetProperty("params")[0].GetString()).IsEqualTo("snapshot");
+    }
+
+    [Test]
+    public async ValueTask QueryDocument_rejects_http_errors()
+    {
+        using var fixture = new Fixture();
+        fixture.Handler.Status = HttpStatusCode.Forbidden;
+        try
+        {
+            using JsonDocument response = await fixture.Util.QueryDocument("account", "token", "database",
+                new D1BatchQuery { D1SingleQuery = new D1SingleQuery { Sql = "SELECT 1" } });
+        }
+        catch (HttpRequestException) { return; }
+        throw new Exception("HTTP failure was swallowed.");
+    }
+
+    [Test]
+    public async ValueTask QueryDocument_rejects_malformed_json()
+    {
+        using var fixture = new Fixture();
+        fixture.Handler.Response = "invalid";
+        try
+        {
+            using JsonDocument response = await fixture.Util.QueryDocument("account", "token", "database",
+                new D1BatchQuery { D1SingleQuery = new D1SingleQuery { Sql = "SELECT 1" } });
+        }
+        catch (JsonException) { return; }
+        throw new Exception("Malformed response was accepted.");
+    }
+
     private sealed class Fixture : IDisposable
     {
         public RecordingHandler Handler { get; } = new();

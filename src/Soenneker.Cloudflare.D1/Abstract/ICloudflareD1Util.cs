@@ -1,5 +1,6 @@
 using Soenneker.Cloudflare.OpenApiClient.Models;
 using System.Threading;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Soenneker.Cloudflare.D1.Abstract;
@@ -44,6 +45,14 @@ public interface ICloudflareD1Util
     /// Executes a parameterized query or batch and returns rows as objects. Inspect the response and each statement's success and errors.
     /// </summary>
     ValueTask<D1QueryDatabase200?> Query(string accountId, string apiKey, string databaseId, D1BatchQuery body, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes a parameterized query or batch and preserves the complete JSON response, including
+    /// the array of statement results that the generated query model cannot represent.
+    /// </summary>
+    /// <remarks>The caller owns the returned document and must dispose it. HTTP failures and malformed
+    /// JSON throw; inspect the envelope and each statement for application-level errors.</remarks>
+    ValueTask<JsonDocument> QueryDocument(string accountId, string apiKey, string databaseId, D1BatchQuery body, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Executes a parameterized query or batch and returns rows as arrays with column metadata.
