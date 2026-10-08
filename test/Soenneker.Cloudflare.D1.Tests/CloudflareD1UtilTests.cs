@@ -19,7 +19,7 @@ public sealed class CloudflareD1UtilTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
-    public async ValueTask Query_preserves_parameters_and_uses_correct_endpoint(bool raw)
+    public async ValueTask Query_preserves_parameters_and_uses_correct_endpoint(bool raw, CancellationToken cancellationToken)
     {
         using var fixture = new Fixture();
         var body = new D1BatchQuery { D1SingleQuery = new D1SingleQuery
@@ -27,9 +27,9 @@ public sealed class CloudflareD1UtilTests
             Sql = "SELECT * FROM users WHERE name = ?", Params = ["O'Reilly"]
         }};
         if (raw)
-            await fixture.Util.QueryRaw("account", "token", "database", body);
+            await fixture.Util.QueryRaw("account", "token", "database", body, cancellationToken: cancellationToken);
         else
-            await fixture.Util.Query("account", "token", "database", body);
+            await fixture.Util.Query("account", "token", "database", body, cancellationToken: cancellationToken);
 
         await Assert.That(fixture.Handler.Method).IsEqualTo("POST");
         await Assert.That(fixture.Handler.Uri).IsEqualTo("https://api.cloudflare.com/client/v4/accounts/account/d1/database/database/" + (raw ? "raw" : "query"));
@@ -40,22 +40,22 @@ public sealed class CloudflareD1UtilTests
     }
 
     [Test]
-    public async ValueTask Batch_serializes_as_batch_object()
+    public async ValueTask Batch_serializes_as_batch_object(CancellationToken cancellationToken)
     {
         using var fixture = new Fixture();
         await fixture.Util.Query("account", "token", "database", new D1BatchQuery
         {
             D1BatchQueryMember1 = new D1BatchQueryMember1 { Batch = [new D1SingleQuery { Sql = "SELECT 1" }, new D1SingleQuery { Sql = "SELECT 2" }] }
-        });
+        }, cancellationToken: cancellationToken);
         using var json = JsonDocument.Parse(fixture.Handler.Body!);
         await Assert.That(json.RootElement.GetProperty("batch").GetArrayLength()).IsEqualTo(2);
     }
 
     [Test]
-    public async ValueTask List_passes_pagination_and_encodes_name()
+    public async ValueTask List_passes_pagination_and_encodes_name(CancellationToken cancellationToken)
     {
         using var fixture = new Fixture();
-        await fixture.Util.ListDatabases("account", "token", "test database", 2, 10);
+        await fixture.Util.ListDatabases("account", "token", "test database", 2, 10, cancellationToken: cancellationToken);
         await Assert.That(fixture.Handler.Method).IsEqualTo("GET");
         await Assert.That(fixture.Handler.Uri!.Contains("page=2")).IsTrue();
         await Assert.That(fixture.Handler.Uri.Contains("per_page=10")).IsTrue();
@@ -63,7 +63,7 @@ public sealed class CloudflareD1UtilTests
     }
 
     [Test]
-    public async ValueTask Rejects_ambiguous_query_before_acquiring_client()
+    public async ValueTask Rejects_ambiguous_query_before_acquiring_client(CancellationToken cancellationToken)
     {
         using var fixture = new Fixture();
         try
@@ -72,7 +72,7 @@ public sealed class CloudflareD1UtilTests
             {
                 D1SingleQuery = new D1SingleQuery { Sql = "SELECT 1" },
                 D1BatchQueryMember1 = new D1BatchQueryMember1 { Batch = [new D1SingleQuery { Sql = "SELECT 2" }] }
-            });
+            }, cancellationToken: cancellationToken);
             throw new InvalidOperationException("Expected validation failure.");
         }
         catch (ArgumentException) { }
@@ -80,7 +80,7 @@ public sealed class CloudflareD1UtilTests
     }
 
     [Test]
-    public async ValueTask Cancellation_stops_before_acquiring_client()
+    public async ValueTask Cancellation_stops_before_acquiring_client(CancellationToken cancellationToken)
     {
         using var fixture = new Fixture();
         using var cancellation = new CancellationTokenSource();
@@ -95,14 +95,14 @@ public sealed class CloudflareD1UtilTests
     }
 
     [Test]
-    public async ValueTask Api_errors_are_propagated()
+    public async ValueTask Api_errors_are_propagated(CancellationToken cancellationToken)
     {
         using var fixture = new Fixture();
         fixture.Handler.Status = HttpStatusCode.Forbidden;
         fixture.Handler.Response = "{\"success\":false,\"errors\":[{\"code\":10000,\"message\":\"Authentication error\"}]}";
         try
         {
-            await fixture.Util.GetDatabase("account", "token", "database");
+            await fixture.Util.GetDatabase("account", "token", "database", cancellationToken: cancellationToken);
             throw new InvalidOperationException("Expected Cloudflare API failure.");
         }
         catch (D1ApiResponseCommonFailure error)
@@ -112,12 +112,12 @@ public sealed class CloudflareD1UtilTests
     }
 
     [Test]
-    public async ValueTask QueryDocument_preserves_statement_arrays_and_errors()
+    public async ValueTask QueryDocument_preserves_statement_arrays_and_errors(CancellationToken cancellationToken)
     {
         using var fixture = new Fixture();
         fixture.Handler.Response = "{\"success\":true,\"result\":[{\"success\":true,\"results\":[{\"value\":\"snapshot\"}]},{\"success\":false,\"error\":\"failed\"}]}";
         using JsonDocument response = await fixture.Util.QueryDocument("account", "token", "database",
-            new D1BatchQuery { D1SingleQuery = new D1SingleQuery { Sql = "SELECT ?", Params = ["snapshot"] } });
+            new D1BatchQuery { D1SingleQuery = new D1SingleQuery { Sql = "SELECT ?", Params = ["snapshot"] } }, cancellationToken: cancellationToken);
         JsonElement statements = response.RootElement.GetProperty("result");
         await Assert.That(statements.GetArrayLength()).IsEqualTo(2);
         await Assert.That(statements[0].GetProperty("results")[0].GetProperty("value").GetString()).IsEqualTo("snapshot");
@@ -128,28 +128,28 @@ public sealed class CloudflareD1UtilTests
     }
 
     [Test]
-    public async ValueTask QueryDocument_rejects_http_errors()
+    public async ValueTask QueryDocument_rejects_http_errors(CancellationToken cancellationToken)
     {
         using var fixture = new Fixture();
         fixture.Handler.Status = HttpStatusCode.Forbidden;
         try
         {
             using JsonDocument response = await fixture.Util.QueryDocument("account", "token", "database",
-                new D1BatchQuery { D1SingleQuery = new D1SingleQuery { Sql = "SELECT 1" } });
+                new D1BatchQuery { D1SingleQuery = new D1SingleQuery { Sql = "SELECT 1" } }, cancellationToken: cancellationToken);
         }
         catch (HttpRequestException) { return; }
         throw new Exception("HTTP failure was swallowed.");
     }
 
     [Test]
-    public async ValueTask QueryDocument_rejects_malformed_json()
+    public async ValueTask QueryDocument_rejects_malformed_json(CancellationToken cancellationToken)
     {
         using var fixture = new Fixture();
         fixture.Handler.Response = "invalid";
         try
         {
             using JsonDocument response = await fixture.Util.QueryDocument("account", "token", "database",
-                new D1BatchQuery { D1SingleQuery = new D1SingleQuery { Sql = "SELECT 1" } });
+                new D1BatchQuery { D1SingleQuery = new D1SingleQuery { Sql = "SELECT 1" } }, cancellationToken: cancellationToken);
         }
         catch (JsonException) { return; }
         throw new Exception("Malformed response was accepted.");
