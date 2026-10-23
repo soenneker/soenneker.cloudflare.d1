@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Kiota.Abstractions;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Microsoft.Kiota.Http.HttpClientLibrary;
 using Soenneker.Cloudflare.OpenApiClient;
@@ -45,7 +46,7 @@ public sealed class CloudflareD1UtilTests
         using var fixture = new Fixture();
         await fixture.Util.Query("account", "token", "database", new D1BatchQuery
         {
-            D1BatchQueryMember1 = new D1BatchQueryMember1 { Batch = [new D1SingleQuery { Sql = "SELECT 1" }, new D1SingleQuery { Sql = "SELECT 2" }] }
+            D1BatchQueryMultipleQueries = new D1BatchQueryMultipleQueries { Batch = [new D1SingleQuery { Sql = "SELECT 1" }, new D1SingleQuery { Sql = "SELECT 2" }] }
         }, cancellationToken: cancellationToken);
         using var json = JsonDocument.Parse(fixture.Handler.Body!);
         await Assert.That(json.RootElement.GetProperty("batch").GetArrayLength()).IsEqualTo(2);
@@ -71,7 +72,7 @@ public sealed class CloudflareD1UtilTests
             await fixture.Util.Query("account", "token", "database", new D1BatchQuery
             {
                 D1SingleQuery = new D1SingleQuery { Sql = "SELECT 1" },
-                D1BatchQueryMember1 = new D1BatchQueryMember1 { Batch = [new D1SingleQuery { Sql = "SELECT 2" }] }
+                D1BatchQueryMultipleQueries = new D1BatchQueryMultipleQueries { Batch = [new D1SingleQuery { Sql = "SELECT 2" }] }
             }, cancellationToken: cancellationToken);
             throw new InvalidOperationException("Expected validation failure.");
         }
@@ -166,7 +167,7 @@ public sealed class CloudflareD1UtilTests
         {
             _http = new System.Net.Http.HttpClient(Handler);
             _adapter = new HttpClientRequestAdapter(new AnonymousAuthenticationProvider(), httpClient: _http);
-            ClientUtil = new StubClientUtil(new CloudflareOpenApiClient(_adapter));
+            ClientUtil = new StubClientUtil(new CloudflareOpenApiClient(_adapter), _adapter);
             Util = new CloudflareD1Util(ClientUtil);
         }
         public void Dispose() { _adapter.Dispose(); _http.Dispose(); }
@@ -188,7 +189,7 @@ public sealed class CloudflareD1UtilTests
         }
     }
 
-    private sealed class StubClientUtil(CloudflareOpenApiClient client) : ICloudflareClientUtil
+    private sealed class StubClientUtil(CloudflareOpenApiClient client, IRequestAdapter adapter) : ICloudflareClientUtil
     {
         public string? Token { get; private set; }
         public ValueTask<CloudflareOpenApiClient> Get(CancellationToken cancellationToken = default) => ValueTask.FromResult(client);
@@ -196,6 +197,12 @@ public sealed class CloudflareD1UtilTests
         {
             Token = apiKey;
             return ValueTask.FromResult(client);
+        }
+        public ValueTask<IRequestAdapter> GetRequestAdapter(CancellationToken cancellationToken = default) => ValueTask.FromResult(adapter);
+        public ValueTask<IRequestAdapter> GetRequestAdapter(string apiKey, CancellationToken cancellationToken = default)
+        {
+            Token = apiKey;
+            return ValueTask.FromResult(adapter);
         }
         public ValueTask<bool> Remove(CancellationToken cancellationToken = default) => ValueTask.FromResult(false);
         public ValueTask<bool> Remove(string apiKey, CancellationToken cancellationToken = default) => ValueTask.FromResult(false);

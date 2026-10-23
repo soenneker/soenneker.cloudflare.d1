@@ -15,7 +15,7 @@ namespace Soenneker.Cloudflare.D1;
 
 public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudflareD1Util
 {
-    public async ValueTask<D1ListDatabases200?> ListDatabases(string accountId, string apiKey, string? name = null, int? page = null, int? perPage = null, CancellationToken cancellationToken = default)
+    public async ValueTask<D1ListDatabases200Response?> ListDatabases(string accountId, string apiKey, string? name = null, int? page = null, int? perPage = null, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         if (page is < 1) throw new ArgumentOutOfRangeException(nameof(page));
@@ -25,7 +25,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database.GetAsync(config => { config.QueryParameters.Name = name; config.QueryParameters.Page = page; config.QueryParameters.PerPage = perPage; }, cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1CreateDatabase200?> CreateDatabase(string accountId, string apiKey, D1CreateDatabase body, CancellationToken cancellationToken = default)
+    public async ValueTask<D1CreateDatabase200Response?> CreateDatabase(string accountId, string apiKey, D1CreateDatabaseRequest body, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentNullException.ThrowIfNull(body);
@@ -35,7 +35,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database.PostAsync(body, cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1GetDatabase200?> GetDatabase(string accountId, string apiKey, string databaseId, CancellationToken cancellationToken = default)
+    public async ValueTask<D1GetDatabase200Response?> GetDatabase(string accountId, string apiKey, string databaseId, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
@@ -44,7 +44,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database[databaseId].GetAsync(cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1DeleteDatabase200?> DeleteDatabase(string accountId, string apiKey, string databaseId, CancellationToken cancellationToken = default)
+    public async ValueTask<D1DeleteDatabase200Response?> DeleteDatabase(string accountId, string apiKey, string databaseId, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
@@ -53,7 +53,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database[databaseId].DeleteAsync(cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1UpdateDatabase200?> UpdateDatabase(string accountId, string apiKey, string databaseId, D1DatabaseUpdateRequestBody body, CancellationToken cancellationToken = default)
+    public async ValueTask<D1UpdateDatabase200Response?> UpdateDatabase(string accountId, string apiKey, string databaseId, D1DatabaseUpdateRequestBody body, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
@@ -63,7 +63,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database[databaseId].PutAsync(body, cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1UpdatePartialDatabase200?> UpdateDatabasePartial(string accountId, string apiKey, string databaseId, D1DatabaseUpdatePartialRequestBody body, CancellationToken cancellationToken = default)
+    public async ValueTask<D1UpdatePartialDatabase200Response?> UpdateDatabasePartial(string accountId, string apiKey, string databaseId, D1DatabaseUpdatePartialRequestBody body, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
@@ -73,7 +73,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database[databaseId].PatchAsync(body, cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1QueryDatabase200?> Query(string accountId, string apiKey, string databaseId, D1BatchQuery body, CancellationToken cancellationToken = default)
+    public async ValueTask<D1QueryDatabase200Response?> Query(string accountId, string apiKey, string databaseId, D1BatchQuery body, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
@@ -99,7 +99,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1RawDatabaseQuery200?> QueryRaw(string accountId, string apiKey, string databaseId, D1BatchQuery body, CancellationToken cancellationToken = default)
+    public async ValueTask<D1RawDatabaseQuery200Response?> QueryRaw(string accountId, string apiKey, string databaseId, D1BatchQuery body, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
@@ -109,7 +109,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database[databaseId].Raw.PostAsync(body, cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1ExportDatabase200?> ExportDatabase(string accountId, string apiKey, string databaseId, D1ExportDatabase body, CancellationToken cancellationToken = default)
+    public async ValueTask<D1ExportDatabase200Response?> ExportDatabase(string accountId, string apiKey, string databaseId, D1ExportDatabaseRequest body, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
@@ -119,7 +119,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database[databaseId].Export.PostAsync(body, cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1ImportDatabase200?> ImportDatabase(string accountId, string apiKey, string databaseId, D1ImportDatabase body, CancellationToken cancellationToken = default)
+    public async ValueTask<D1ImportDatabase200Response?> ImportDatabase(string accountId, string apiKey, string databaseId, D1ImportDatabaseRequest body, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
@@ -129,7 +129,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database[databaseId].Import.PostAsync(body, cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1TimeTravelGetBookmark200?> GetTimeTravelBookmark(string accountId, string apiKey, string databaseId, string? timestamp = null, CancellationToken cancellationToken = default)
+    public async ValueTask<D1TimeTravelGetBookmark200Response?> GetTimeTravelBookmark(string accountId, string apiKey, string databaseId, DateTimeOffset? timestamp = null, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
@@ -138,7 +138,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database[databaseId].Time_travel.Bookmark.GetAsync(config => config.QueryParameters.Timestamp = timestamp, cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1TimeTravelRestore200?> RestoreDatabase(string accountId, string apiKey, string databaseId, string bookmark, CancellationToken cancellationToken = default)
+    public async ValueTask<D1TimeTravelRestore200Response?> RestoreDatabase(string accountId, string apiKey, string databaseId, string bookmark, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
@@ -157,7 +157,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
     private static void ValidateQuery(D1BatchQuery body)
     {
         ArgumentNullException.ThrowIfNull(body);
-        if ((body.D1SingleQuery is null) == (body.D1BatchQueryMember1 is null))
+        if ((body.D1SingleQuery is null) == (body.D1BatchQueryMultipleQueries is null))
             throw new ArgumentException("Specify exactly one single query or batch.", nameof(body));
 
         if (body.D1SingleQuery is { } query)
@@ -166,7 +166,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
             return;
         }
 
-        var batch = body.D1BatchQueryMember1!.Batch;
+        var batch = body.D1BatchQueryMultipleQueries!.Batch;
         if (batch is null || batch.Count == 0)
             throw new ArgumentException("A batch must contain at least one query.", nameof(body));
         foreach (var statement in batch)
