@@ -109,7 +109,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database[databaseId].Raw.PostAsync(body, cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1ExportDatabase200Response?> ExportDatabase(string accountId, string apiKey, string databaseId, D1ExportDatabaseRequest body, CancellationToken cancellationToken = default)
+    public async ValueTask<D1ExportDatabaseSuccessResponse?> ExportDatabase(string accountId, string apiKey, string databaseId, D1ExportDatabaseRequest body, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
@@ -119,7 +119,7 @@ public sealed class CloudflareD1Util(ICloudflareClientUtil clientUtil) : ICloudf
         return await client.Accounts[accountId].D1.Database[databaseId].Export.PostAsync(body, cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<D1ImportDatabase200Response?> ImportDatabase(string accountId, string apiKey, string databaseId, D1ImportDatabaseRequest body, CancellationToken cancellationToken = default)
+    public async ValueTask<D1ImportDatabaseSuccessResponse?> ImportDatabase(string accountId, string apiKey, string databaseId, D1ImportDatabaseRequest body, CancellationToken cancellationToken = default)
     {
         ValidateAccount(accountId, apiKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);

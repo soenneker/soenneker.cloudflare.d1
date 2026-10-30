@@ -63,12 +63,12 @@ public interface ICloudflareD1Util
     /// <summary>
     /// Starts or polls a SQL export using the supplied export request and bookmark.
     /// </summary>
-    ValueTask<D1ExportDatabase200Response?> ExportDatabase(string accountId, string apiKey, string databaseId, D1ExportDatabaseRequest body, CancellationToken cancellationToken = default);
+    ValueTask<D1ExportDatabaseSuccessResponse?> ExportDatabase(string accountId, string apiKey, string databaseId, D1ExportDatabaseRequest body, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Performs one step of the import API flow. Uploading SQL to the returned upload URL is the caller's responsibility.
     /// </summary>
-    ValueTask<D1ImportDatabase200Response?> ImportDatabase(string accountId, string apiKey, string databaseId, D1ImportDatabaseRequest body, CancellationToken cancellationToken = default);
+    ValueTask<D1ImportDatabaseSuccessResponse?> ImportDatabase(string accountId, string apiKey, string databaseId, D1ImportDatabaseRequest body, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets a Time Travel bookmark for an optional RFC3339 timestamp.
